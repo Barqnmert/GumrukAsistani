@@ -1,10 +1,10 @@
-# Gümrük Asistanı
+# Gümrükte Kalmasın (gümrüktekalmasın.com)
 
 Yurt dışından gelen paketi gümrükte takılanlar için üç katmanlı triyaj sistemi:
 
-1. **Karar motoru** — paket bilgisinden vergi/masraf tahmini ve dürüst öneri: DEĞMEZ / KENDİN YAP / MÜŞAVİR TUT
+1. **Karar motoru** — iki rejimli deterministik hesap: bireysel gönderilerde tek ve maktu vergi (AB %30 / diğer %60, ÖTV IV +%20, kitap %0, KDV'siz); ticari veya 1500 € / 30 kg üstünde standart rejim (GV+ÖTV+KDV). Öneri: DEĞMEZ / KENDİN YAP / MÜŞAVİR TUT / GETİRİLEMEZ (telefon-kozmetik bireysel yasağı)
 2. **DIY rehberler** — 4 senaryo için adım adım gümrük süreci (AliExpress, Amazon/eBay, hediye, iş numunesi)
-3. **Müşavir eşleştirme** — form ile talep toplama, manuel yönlendirme (MVP)
+3. **Müşavir eşleştirme** — form ile talep toplama + e-posta bildirimi (edge function), manuel yönlendirme (MVP)
 
 Detaylı ürün brief'i: [docs/brief.md](docs/brief.md)
 
@@ -26,9 +26,12 @@ npm run build          # üretim derlemesi (tsc + vite)
 
 ## Kalibrasyon
 
-Tüm vergi oranları, ardiye tablosu ve karar eşikleri tek dosyada:
-[src/lib/rates.ts](src/lib/rates.ts). 2026 Ticaret Bakanlığı tebliği
-netleştiğinde yalnızca bu dosya güncellenir; testler formül davranışını korur.
+Tüm vergi oranları, limitler ve karar eşikleri tek dosyada:
+[src/lib/rates.ts](src/lib/rates.ts) — dosya başındaki yorumda doğrulanmış
+kaynaklar (Karar 10813, Ticaret Bakanlığı SSS, 2026 Müşavirlik Asgari Ücret
+Tarifesi) listelidir. Mevzuat değişirse yalnızca bu dosya güncellenir;
+28 birim testi formül davranışını korur. EUR/TL kuru çalışma anında
+Frankfurter (ECB) API'sinden çekilir, ulaşılamazsa referans kur kullanılır.
 
 ## Veritabanı
 
