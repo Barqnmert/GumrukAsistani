@@ -161,7 +161,7 @@ function MusavirForm() {
           />
         </div>
 
-        {hata && <p style={{ color: 'var(--renk-degmez)' }}>{hata}</p>}
+        {hata && <p className="form-hata">{hata}</p>}
 
         <button type="submit" disabled={gonderiliyor}>
           {gonderiliyor ? 'Gönderiliyor…' : 'Talebi gönder'}
