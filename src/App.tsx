@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
+import Home from './pages/Home';
 import TriageForm from './pages/TriageForm';
 import Sonuc from './pages/Sonuc';
 import RehberIndex from './pages/RehberIndex';
@@ -11,7 +12,8 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
-          <Route path="/" element={<TriageForm />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/hesapla" element={<TriageForm />} />
           <Route path="/sonuc" element={<Sonuc />} />
           <Route path="/rehber" element={<RehberIndex />} />
           <Route path="/rehber/:slug" element={<RehberDetay />} />

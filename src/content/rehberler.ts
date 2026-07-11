@@ -1,5 +1,6 @@
 // Katman 2 — DIY Sihirbaz: en sık 4 senaryo için statik rehber içeriği.
-// İçerik bilgilendirme amaçlıdır; mevzuat değiştikçe burada güncellenir.
+// İçerik Temmuz 2026'da güncel mevzuata göre doğrulandı (Karar 10813,
+// Ticaret Bakanlığı posta/hızlı kargo SSS). Bilgilendirme amaçlıdır.
 
 export interface Rehber {
   slug: string;
@@ -14,31 +15,31 @@ export interface Rehber {
 export const REHBERLER: Rehber[] = [
   {
     slug: 'aliexpress',
-    baslik: 'AliExpress paketi gümrükte — kendin çek',
+    baslik: 'AliExpress / Temu paketi gümrükte — kendin çek',
     ozet:
-      'Çin menşeli e-ticaret paketleri için ETGB süreci: çoğu durumda kargo firması üzerinden birkaç tıkla tamamlanır.',
+      'Çin çıkışlı e-ticaret paketlerinde beyanı taşıyıcı düzenler; sana kalan vergiyi online ödemek. 6 Şubat 2026 sonrası her kıymetteki paket vergili: AB dışından %60 (+ elektronikte %20).',
     kimeUygun:
-      'AliExpress, Temu, Shein gibi platformlardan gelen, kısıtlı kategoride olmayan paketler.',
+      'AliExpress, Temu, Shein gibi platformlardan gelen, kıymeti 1500 €\'yu ve 30 kg\'ı aşmayan bireysel paketler. Cep telefonu ve kozmetik bu yolla GELEMEZ.',
     adimlar: [
       {
         baslik: 'Takip numaranı ve taşıyıcıyı belirle',
         detay:
-          'Sipariş sayfasındaki takip numarasıyla paketin Türkiye\'de hangi taşıyıcıya (PTT, Yurtiçi, aracı hızlı kargo firması) devredildiğini bul. Paket gümrüğe geldiğinde taşıyıcı sana SMS/e-posta ile bildirim gönderir.',
+          'Sipariş sayfasındaki takip numarasıyla paketin Türkiye\'de hangi taşıyıcıya (PTT veya yetkili hızlı kargo operatörü) devredildiğini bul. Paket gümrüğe geldiğinde taşıyıcı SMS/e-posta ile bildirim gönderir.',
       },
       {
         baslik: 'Bildirimdeki beyan onayını aç',
         detay:
-          'Taşıyıcının gönderdiği linkte (veya PTT için e-Devlet "Gümrüğe Gelen Gönderi Sorgulama" hizmetinde) paketinin içeriği, değeri ve hesaplanan vergiler listelenir. Değer, sipariş tutarınla uyuşuyor mu kontrol et.',
+          'Taşıyıcının linkinde (veya PTT için e-Devlet "Gümrüğe Gelen Gönderi Sorgulama" hizmetinde) paketin içeriği, kıymeti ve hesaplanan vergi listelenir. Kıymetin sipariş tutarınla uyuştuğunu kontrol et — vergi bu tutar üzerinden alınır.',
       },
       {
-        baslik: 'Fatura/sipariş kanıtını yükle',
+        baslik: 'Sipariş kanıtını hazırla/yükle',
         detay:
-          'Sipariş özeti ekran görüntüsü veya PDF faturayı sisteme yükle. Gümrük, beyan edilen değerin doğruluğunu buradan kontrol eder — düşük beyan cezaya yol açar.',
+          'Sipariş özeti ekran görüntüsü veya PDF fatura iste(nirse) yükle. Gümrük, beyan edilen kıymeti emsallerle karşılaştırabilir; düşük beyan cezalı vergiye yol açar.',
       },
       {
-        baslik: 'ETGB ile beyanı onayla ve vergiyi öde',
+        baslik: 'Vergiyi öde',
         detay:
-          'Taşıyıcı senin adına Elektronik Ticaret Gümrük Beyannamesi (ETGB) düzenler. Sana düşen, ekranda çıkan vergi tutarını (gümrük vergisi + KDV) online ödemek. Ödeme sonrası beyan işleme alınır.',
+          'Taşıyıcı, Elektronik Ticaret Gümrük Beyannamesini (ETGB) senin adına düzenler. Ekranda çıkan tek ve maktu vergiyi (AB dışı %60; elektronikte +%20; ayrıca KDV YOK) online öde. Ödeme sonrası beyan işleme alınır.',
       },
       {
         baslik: 'Teslimatı bekle',
@@ -49,84 +50,86 @@ export const REHBERLER: Rehber[] = [
     gerekliBelgeler: [
       'Sipariş özeti / fatura (ekran görüntüsü yeterli)',
       'T.C. kimlik numarası',
-      'Ödeme için banka/kredi kartı',
+      'Online ödeme için banka/kredi kartı',
     ],
     ipuclari: [
-      'Vergi tutarı hesapladığımızdan belirgin şekilde yüksekse, taşıyıcının değer tespitine itiraz edebilirsin — sipariş kanıtı bu yüzden önemli.',
-      'Paketi 20 gün içinde çekmezsen tasfiye sürecine girer; bildirimleri bekletme.',
+      'Ayda en fazla 5 gönderin bu kapsamda işlem görür — sık sipariş veriyorsan takvimini planla.',
+      'Vergi, hesapladığımızdan belirgin yüksekse taşıyıcının kıymet tespitine sipariş kanıtıyla itiraz edebilirsin.',
+      'Paketi bekletme: bekleme süresi dolarsa iade/tasfiyeye gider, ardiye de birikir.',
     ],
   },
   {
     slug: 'amazon-ebay',
     baslik: 'Amazon Global / eBay paketi — kendin çek',
     ozet:
-      'ABD/İngiltere çıkışlı gönderiler genellikle hızlı kargo (UPS, FedEx, DHL, Aramex) ile gelir; süreç kargo firmasının müşteri paneli üzerinden yürür.',
+      'ABD/İngiltere çıkışlı gönderiler hızlı kargo (UPS, FedEx, DHL, Aramex) ile gelir; süreç operatörün paneli üzerinden yürür. AB dışı çıkışta maktu vergi %60\'tır.',
     kimeUygun:
-      'Amazon Global, eBay veya yurt dışı mağazalardan hızlı kargo ile gelen paketler.',
+      'Amazon Global, eBay veya yurt dışı mağazalardan hızlı kargo ile gelen, 1500 € / 30 kg sınırını aşmayan bireysel paketler.',
     adimlar: [
       {
         baslik: 'Kargo firmasının bilgilendirmesini bekle',
         detay:
-          'Paket Türkiye\'ye inince kargo firması "gümrük işlemleri için belge/onay gerekiyor" içerikli e-posta/SMS gönderir. Bu mesajdaki link üzerinden ilerleyeceksin.',
+          'Paket Türkiye\'ye inince operatör "gümrük işlemleri için onay/belge gerekiyor" içerikli e-posta/SMS gönderir. Bu mesajdaki link üzerinden ilerleyeceksin.',
       },
       {
-        baslik: 'Vekalet veya bireysel beyan tercihini yap',
+        baslik: 'Dolaylı temsil onayını ver',
         detay:
-          'Hızlı kargo firmaları düşük değerli gönderilerde ETGB ile senin adına beyan yapar (dolaylı temsil onayı istenir). Onay formunu doldur; yüksek değerli gönderide firma seni normal beyanname (TCGB) sürecine yönlendirir — o durumda müşavir önerimizi tekrar değerlendir.',
+          'Operatör, ETGB\'yi senin adına düzenlemek için dolaylı temsil onayı ister; formu online doldur. Kıymet 1500 €\'yu aşıyorsa operatör seni standart beyanname (TCGB) sürecine yönlendirir — o noktada müşavir önerimizi tekrar değerlendir.',
       },
       {
         baslik: 'Fatura ve ödeme kanıtını yükle',
         detay:
-          'Amazon/eBay sipariş faturasını (PDF) ve gerekiyorsa kart ekstresini yükle. Ürün açıklamasının ve tutarın net görünmesine dikkat et.',
+          'Amazon "Order Invoice" / eBay "Order details" PDF\'ini yükle. Ürün açıklaması ve tutar net görünmeli; kıymet tespiti buna göre yapılır.',
       },
       {
-        baslik: 'Vergileri ve hizmet bedelini öde',
+        baslik: 'Vergi ve hizmet bedelini öde',
         detay:
-          'Firma hesaplanan vergiler + kendi gümrükleme hizmet bedelini tek faturada iletir. Online ödedikten sonra beyan tamamlanır.',
+          'Operatör, tek ve maktu vergi (%60; ÖTV IV listesi eşyasında +%20) ile kendi gümrükleme hizmet bedelini iletir. Online ödedikten sonra beyan tamamlanır.',
       },
       {
         baslik: 'Teslimat ve belge saklama',
         detay:
-          'Paket dağıtıma çıkar. ETGB çıktısını ve ödeme dekontunu en az 5 yıl sakla — özellikle iade/garanti süreçlerinde gerekebilir.',
+          'Paket dağıtıma çıkar. ETGB çıktısını ve ödeme dekontunu sakla — iade/garanti süreçlerinde gerekebilir.',
       },
     ],
     gerekliBelgeler: [
       'Sipariş faturası (Amazon "Order Invoice" / eBay "Order details" PDF)',
       'T.C. kimlik numarası',
-      'Dolaylı temsil onay formu (kargo firması iletir)',
+      'Dolaylı temsil onay formu (operatör iletir)',
     ],
     ipuclari: [
-      'Kargo firmasının "gümrükleme hizmet bedeli" pazarlığa kapalı değildir sanılır ama itiraz edilebilir; faturada ayrı kalem olarak iste.',
-      'ABD çıkışlı elektronikte IMEI kaydı gerekebilir (telefon/tablet) — bu durumda kayıt harcını da bütçele.',
+      'Operatörün "gümrükleme hizmet bedeli" ayrı bir kalemdir; faturada net görünmesini iste.',
+      'Cep telefonu bu yolla GELEMEZ — sipariş vermeden önce kategori kısıtlarını kontrol et.',
+      'ABD çıkışlı laptop/tablet gibi elektroniklerde ÖTV IV ilavesi (+%20) vergiyi ciddi büyütür; sipariş öncesi hesapla.',
     ],
   },
   {
     slug: 'hediye',
     baslik: 'Yurt dışından hediye geldi — ne yapmalı?',
     ozet:
-      '6 Şubat 2026 sonrası hediye gönderiler de muafiyet dışı: değeri ne olursa olsun beyana tabi. Ama süreç genelde posta idaresi üzerinden basittir.',
+      '6 Şubat 2026 sonrası hediye gönderiler de istisnasız vergiye tabi: kıymeti ne olursa olsun beyan ve vergi var. Süreç genelde PTT üzerinden yürür.',
     kimeUygun:
       'Yurt dışındaki yakınlarından posta yoluyla kişisel eşya/hediye gelenler.',
     adimlar: [
       {
         baslik: 'PTT/posta bildirimini bekle',
         detay:
-          'Hediye gönderiler çoğunlukla ulusal posta ağıyla gelir ve PTT gümrük müdürlüğünde bekletilir. Adresine kağıt tebligat veya SMS gelir.',
+          'Hediye gönderiler çoğunlukla ulusal posta ağıyla gelir ve PTT\'nin gümrüklü biriminde bekletilir. Adresine SMS veya kağıt tebligat gelir.',
       },
       {
         baslik: 'e-Devlet üzerinden gönderiyi sorgula',
         detay:
-          '"PTT Gümrüğe Gelen Gönderi" hizmetine gir, barkod numarasıyla paketini bul. İçerik ve değer beyanını burada göreceksin.',
+          '"PTT Gümrüğe Gelen Gönderi" hizmetine gir, barkod numarasıyla paketini bul. İçerik ve kıymet beyanını burada göreceksin.',
       },
       {
-        baslik: 'Değer beyanını doldur',
+        baslik: 'Kıymet beyanını doldur',
         detay:
-          'Gönderen değer beyanı yazmadıysa senden içerik ve tahmini değer beyanı istenir. Gerçekçi beyan et: hediye de olsa gümrük memuru emsal fiyat üzerinden değerlendirme yapabilir.',
+          'Gönderen kıymet yazmadıysa senden içerik ve tahmini değer beyanı istenir. Gerçekçi beyan et: hediye de olsa memur emsal fiyat üzerinden değerlendirme yapabilir; düşük beyan cezalıdır.',
       },
       {
-        baslik: 'Vergiyi öde veya muafiyet itirazı yap',
+        baslik: 'Vergiyi öde',
         detay:
-          'Hesaplanan vergiyi PTT vezne/online kanaldan öde. Kişisel kullanım miktarını aşmayan, ticari nitelik taşımayan gönderilerde durumu açıklayan dilekçe ile itiraz hakkın var.',
+          'Tek ve maktu vergi uygulanır: AB\'den %30, diğer ülkelerden %60 (kişisel kitapta %0). PTT vezne veya online kanaldan öde. Kullanılmış kişisel eşyada vergisiz işlem mümkün — durumu dilekçeyle açıkla.',
       },
       {
         baslik: 'Paketi teslim al',
@@ -137,58 +140,59 @@ export const REHBERLER: Rehber[] = [
     gerekliBelgeler: [
       'Tebligat / barkod numarası',
       'T.C. kimlik (şubeden teslimde)',
-      'Varsa gönderenin değer beyanı',
+      'Varsa gönderenin kıymet beyanı',
     ],
     ipuclari: [
-      'Kullanılmış kişisel eşyada (giysi, kitap vb.) vergi çıkmaması ya da düşük çıkması için "kullanılmış, ticari değeri yok" açıklaması ekletmek işe yarar.',
-      'Gıda, takviye, kozmetik içeren hediyeler ek izne takılabilir — bu kategorilerde paket iade riskini göze al veya müşavir danış.',
+      'Kullanılmış kişisel eşyada (giysi, kitap vb.) "kullanılmış, ticari değeri yok" açıklaması vergiyi düşürebilir/sıfırlayabilir.',
+      'Gıda takviyesi ve ilaç içeren hediyeler reçete/doktor raporu ister; kozmetik bireysel gönderiyle hiç gelemez — göndericini önceden uyar.',
+      'Teslim almayacaksan hızlıca iade talebi oluştur; bekleme süresi dolunca tasfiyeye gider.',
     ],
   },
   {
     slug: 'is-numunesi',
-    baslik: 'İş numunesi / küçük ticari gönderi — kendin çek',
+    baslik: 'İş numunesi / ticari gönderi — süreci öğren',
     ozet:
-      'Şirket adına gelen numune ve küçük partiler için süreç bireysel paketten farklıdır: vergi numarası, EORI benzeri kayıt ve çoğu zaman TCGB gerekir.',
+      'Şirket adına gelen numune ve partiler maktu vergi kapsamına girmez: standart ithalat beyannamesi (TCGB), GTİP tespiti ve olası izinler gerekir.',
     kimeUygun:
-      'Düzenli numune/parça getiren şahıs şirketi ve KOBİ\'ler. İlk kez yapıyorsan bu rehber "harita" niteliğinde — ilk beyanı müşavirle yapıp sonrakini kendin üstlenmek yaygın stratejidir.',
+      'Düzenli numune/parça getiren şahıs şirketi ve KOBİ\'ler. İlk beyanı müşavirle yapıp sonrakileri kendin üstlenmek yaygın ve mantıklı stratejidir.',
     adimlar: [
       {
         baslik: 'Gönderinin beyan tipini belirle',
         detay:
-          'Düşük değerli numuneler hızlı kargo ETGB kapsamına girebilir; bunun üzerindeki her şey standart beyanname (TCGB) ister. Kargo firmasına "ticari gönderi, şirket adına" olduğunu baştan bildir.',
+          'Ticari nitelikli her gönderi standart beyanname ister — kıymeti düşük olsa bile. Kargo firmasına "ticari gönderi, şirket adına" olduğunu baştan bildir; yanlış bireysel işlem sonradan ceza doğurabilir.',
       },
       {
         baslik: 'BİLGE sistemi / yükümlü kaydını aç',
         detay:
-          'TCGB gerekiyorsa Ticaret Bakanlığı BİLGE sistemine yükümlü kaydı (firma vergi no ile) yaptırılmalı. Kayıt e-Devlet entegrasyonuyla başlar; ilk seferde gümrük müdürlüğü onayı gerekir.',
+          'TCGB için Ticaret Bakanlığı BİLGE sistemine yükümlü kaydı (firma vergi numarasıyla) gerekir. Kayıt e-Devlet entegrasyonuyla başlar; ilk seferde gümrük müdürlüğü onayı alınır.',
       },
       {
         baslik: 'GTİP tespiti yap',
         detay:
-          'Ürünün GTİP (gümrük tarife istatistik pozisyonu) kodunu belirle — vergi oranı ve izin gereksinimleri buna bağlı. Ticaret Bakanlığı tarife arama motorunu kullan; emin değilsen bağlayıcı tarife bilgisi başvurusu yap.',
+          'Ürünün GTİP kodunu belirle — gümrük vergisi oranı, İGV/EMY ek yükleri ve izin gereksinimleri buna bağlıdır. Emin değilsen Bağlayıcı Tarife Bilgisi başvurusu yap (2026 tarifesinde işlem ücreti ~1.590 TL).',
       },
       {
         baslik: 'Beyannameyi doldur ve belgeleri ekle',
         detay:
-          'BİLGE üzerinden TCGB\'yi doldur: fatura, çeki listesi, taşıma senedi (AWB/konşimento), menşe ispatı (varsa ATR/EUR.1 — AB menşeinde vergiyi sıfırlar). Numunelerde "bedelsiz numune" açıklaması ve düşük kıymet gerekçesi ekle.',
+          'BİLGE üzerinden TCGB\'yi doldur: ticari fatura, çeki listesi, taşıma senedi (AWB/konşimento), menşe ispatı (AB\'den geliyorsa ATR — gümrük vergisini sıfırlar). Numunede "bedelsiz numune" açıklaması ekle; bedelsiz girişin de asgari müşavirlik tarifesi 3.410 TL\'dir, kendi yapıyorsan bu masraf olmaz.',
       },
       {
         baslik: 'Muayene/kontrol ve vergi ödemesi',
         detay:
-          'Beyan hat kontrolüne düşer (sarı/kırmızı hat olabilir). İstenirse ek belge sun, vergileri gümrük saymanlığına öde, eşyayı teslim al.',
+          'Beyan hat kontrolüne düşebilir (sarı/kırmızı hat). İstenirse ek belge sun; gümrük vergisi + ÖTV + KDV\'yi (standart rejim) gümrük saymanlığına öde ve eşyayı teslim al.',
       },
     ],
     gerekliBelgeler: [
       'Ticari fatura (proforma değil, mümkünse imzalı)',
       'Taşıma senedi (AWB / konşimento)',
       'Firma vergi levhası ve imza sirküleri',
-      'Menşe belgesi (ATR/EUR.1 — AB menşeinde)',
-      'Gerekiyorsa izin/uygunluk yazıları (TSE, TİTCK vb.)',
+      'Menşe belgesi (ATR / EUR.1 — AB menşeinde)',
+      'Gerekiyorsa izin/uygunluk yazıları (TSE, TİTCK, Tarım vb.)',
     ],
     ipuclari: [
-      'AB\'den gelen eşyada ATR belgesi gümrük vergisini sıfırlar — tedarikçiden mutlaka iste, sonradan ibraz zahmetlidir.',
-      'Aynı üründen düzenli ithalat yapacaksan ilk beyanı müşavirle yapıp beyan örneğini şablon olarak sakla.',
-      'Numune diye beyan edilen ticari miktardaki eşya cezalı vergiye yol açar; miktarı gerçekçi tut.',
+      'AB\'den gelen eşyada ATR belgesi gümrük vergisini sıfırlar — tedarikçiden mutlaka iste; belge tanzimi 2026 tarifesinde 350 TL\'dir.',
+      'Müşavirle çalışırsan 2026 asgari tarifesi beyanname başına ~3.320-3.390 TL\'den başlar (KDV hariç); pazarlık ederken referans al.',
+      '"Numune" diye beyan edilen ticari miktardaki eşya cezalı vergiye yol açar; miktarı gerçekçi tut.',
     ],
   },
 ];

@@ -45,6 +45,7 @@ function MusavirForm() {
           mensei: 'AB_DISI',
           kategori,
           durum: 'gumrukte_bekliyor',
+          gonderiTipi: 'bireysel',
         };
       const sonuc = gelen.sonuc ?? kararVer(girdi);
       await kaydetBasvuru(girdi, sonuc, {
@@ -137,9 +138,10 @@ function MusavirForm() {
                 onChange={(e) => setKategori(e.target.value as Kategori)}
               >
                 <option value="genel">Genel / diğer</option>
-                <option value="elektronik">Elektronik</option>
+                <option value="elektronik">Elektronik (telefon hariç)</option>
+                <option value="telefon">Cep telefonu</option>
                 <option value="tekstil">Tekstil / giyim</option>
-                <option value="kozmetik">Kozmetik</option>
+                <option value="kozmetik">Kozmetik / parfüm</option>
                 <option value="kitap">Kitap / basılı yayın</option>
               </select>
             </div>
