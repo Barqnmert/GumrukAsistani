@@ -2,6 +2,8 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import TriageForm from './pages/TriageForm';
 import Sonuc from './pages/Sonuc';
+import RehberIndex from './pages/RehberIndex';
+import RehberDetay from './pages/RehberDetay';
 
 function Yakinda() {
   return (
@@ -19,7 +21,8 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<TriageForm />} />
           <Route path="/sonuc" element={<Sonuc />} />
-          <Route path="/rehber" element={<Yakinda />} />
+          <Route path="/rehber" element={<RehberIndex />} />
+          <Route path="/rehber/:slug" element={<RehberDetay />} />
           <Route path="/musavir" element={<Yakinda />} />
           <Route path="*" element={<Yakinda />} />
         </Route>
