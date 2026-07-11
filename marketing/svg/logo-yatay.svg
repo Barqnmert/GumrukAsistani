@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300">
+  <rect width="1200" height="300" fill="#ffffff"/>
+  <g transform="translate(60 45) scale(4.8)">
+    <path d="M22 0 44 10v22L22 42 0 32V10Z" fill="#f59e0b"/>
+    <path d="M22 0 44 10 22 20 0 10Z" fill="#fbbf24"/>
+    <path d="M22 20v22L0 32V10Z" fill="#d97706"/>
+    <path d="M11 5 33 15v7l-4-1.8V14L7 4.2Z" fill="#0b1d3a" opacity=".85"/>
+  </g>
+  <text x="310" y="185" font-family="Segoe UI, Arial, sans-serif" font-size="96" font-weight="700" fill="#0b1d3a">gümrükte<tspan fill="#d97706">kalmasın</tspan></text>
+</svg>

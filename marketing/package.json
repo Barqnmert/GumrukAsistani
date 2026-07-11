@@ -1,0 +1,12 @@
+{
+  "name": "gumruk-asistani-marketing",
+  "private": true,
+  "type": "module",
+  "description": "Reklam görselleri SVG->PNG dönüştürücü (Google Ads SVG kabul etmez)",
+  "scripts": {
+    "render": "node render.mjs"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2"
+  }
+}

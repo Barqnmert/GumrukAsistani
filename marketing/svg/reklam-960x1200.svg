@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="1200" viewBox="0 0 960 1200">
+  <defs>
+    <linearGradient id="zemin" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1d3a"/>
+      <stop offset="1" stop-color="#1d4a8f"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="1200" fill="url(#zemin)"/>
+  <rect x="180" y="90" width="600" height="64" rx="32" fill="#f59e0b"/>
+  <text x="480" y="134" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="31" font-weight="700" fill="#0b1d3a">6 Şubat 2026: 30 € muafiyeti kalktı</text>
+  <g transform="translate(304 220) scale(8)">
+    <path d="M22 0 44 10v22L22 42 0 32V10Z" fill="#f59e0b"/>
+    <path d="M22 0 44 10 22 20 0 10Z" fill="#fbbf24"/>
+    <path d="M22 20v22L0 32V10Z" fill="#d97706"/>
+    <path d="M11 5 33 15v7l-4-1.8V14L7 4.2Z" fill="#0b1d3a" opacity=".85"/>
+  </g>
+  <text x="480" y="690" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="76" font-weight="700" fill="#ffffff">Paketin gümrükte</text>
+  <text x="480" y="784" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="76" font-weight="700" fill="#ffffff">mi kaldı?</text>
+  <text x="480" y="884" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="76" font-weight="700" fill="#f59e0b">Panik yok, plan var.</text>
+  <text x="480" y="958" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="34" fill="#c7d4ea">Vergini 30 saniyede hesapla — üyelik yok.</text>
+  <rect x="260" y="1008" width="440" height="94" rx="22" fill="#f59e0b"/>
+  <text x="480" y="1070" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="40" font-weight="700" fill="#0b1d3a">Ücretsiz Hesapla →</text>
+  <text x="480" y="1164" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="600" fill="#ffffff">gümrüktekalmasın.com</text>
+</svg>
