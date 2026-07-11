@@ -1,0 +1,30 @@
+# Bağımlılıklar
+node_modules/
+
+# Build çıktısı
+dist/
+dist-ssr/
+
+# Ortam değişkenleri — ASLA commit edilmez
+.env
+.env.local
+.env.*.local
+
+# Editör / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Loglar
+logs/
+*.log
+npm-debug.log*
+
+# Vercel
+.vercel
