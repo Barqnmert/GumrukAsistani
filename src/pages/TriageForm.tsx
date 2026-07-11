@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { kararVer } from '../lib/decisionEngine';
+import { kaydetBasvuru } from '../lib/basvuru';
 import type { Durum, Kategori, Mensei, PaketGirdisi } from '../lib/types';
 
 function TriageForm() {
@@ -28,6 +29,7 @@ function TriageForm() {
     };
     try {
       const sonuc = kararVer(girdi);
+      void kaydetBasvuru(girdi, sonuc); // talep ölçümü — akışı bloklamaz
       navigate('/sonuc', { state: { girdi, sonuc } });
     } catch (err) {
       setHata(err instanceof Error ? err.message : 'Hesaplama başarısız oldu');
