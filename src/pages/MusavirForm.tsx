@@ -84,14 +84,16 @@ function MusavirForm() {
 
   return (
     <main>
-      <h1>Müşavir talebi</h1>
-      <p>
-        Bilgilerinizi bırakın; sizi lisanslı, sicili doğrulanmış bir gümrük
-        müşavirlik firmasıyla manuel olarak eşleştirelim. MVP döneminde bu
-        hizmet <strong>ücretsizdir</strong>.
-      </p>
+      <header className="sayfa-baslik">
+        <h1>Müşavir talebi</h1>
+        <p>
+          Bilgilerinizi bırakın; sizi lisanslı, sicili doğrulanmış bir gümrük
+          müşavirlik firmasıyla manuel olarak eşleştirelim. MVP döneminde bu
+          hizmet <strong>ücretsizdir</strong>.
+        </p>
+      </header>
 
-      <form className="kart" onSubmit={gonder}>
+      <form className="kart form-kart" onSubmit={gonder}>
         <div className="form-satir">
           <label htmlFor="email">E-posta</label>
           <input

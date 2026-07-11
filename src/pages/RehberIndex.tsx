@@ -4,11 +4,13 @@ import { REHBERLER } from '../content/rehberler';
 function RehberIndex() {
   return (
     <main>
-      <h1>DIY Rehberler</h1>
-      <p>
-        Müşavire para ödemeden paketini kendin çekmek için senaryona uyan
-        rehberi seç. Her rehber adım adım ilerler.
-      </p>
+      <header className="sayfa-baslik">
+        <h1>DIY Rehberler</h1>
+        <p>
+          Müşavire para ödemeden paketini kendin çekmek için senaryona uyan
+          rehberi seç. Her rehber adım adım ilerler.
+        </p>
+      </header>
       {REHBERLER.map((r) => (
         <div className="kart" key={r.slug}>
           <h2 style={{ marginTop: 0 }}>
