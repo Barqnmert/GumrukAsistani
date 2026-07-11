@@ -3,10 +3,13 @@
 // Baran'a iletir. Alıcı adres istemci koduna sızmaz.
 // verify_jwt kapalı: istemci publishable key kullanıyor (JWT değil);
 // uç nokta herkese açık bir iletişim formu niteliğindedir.
+// NOT: FormSubmit, Origin/Referer başlığı olmayan istekleri sessizce
+// reddediyor (HTTP 200 + success:"false") — başlıklar ve gövde kontrolü şart.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const ALICI = "baranmertozturk@gmail.com";
+const SITE = "https://gumruk-asistani.vercel.app";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -52,15 +55,29 @@ Deno.serve(async (req: Request) => {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        Origin: SITE,
+        Referer: `${SITE}/musavir`,
       },
       body: JSON.stringify(govde),
     });
 
-    const ok = yanit.ok;
-    return new Response(JSON.stringify({ ok }), {
-      status: ok ? 200 : 502,
-      headers: { ...CORS, "Content-Type": "application/json" },
-    });
+    const sonuc = (await yanit.json().catch(() => null)) as {
+      success?: string | boolean;
+      message?: string;
+    } | null;
+    const ok =
+      yanit.ok && (sonuc?.success === "true" || sonuc?.success === true);
+
+    if (!ok) {
+      console.error("FormSubmit hatası:", yanit.status, sonuc?.message);
+    }
+    return new Response(
+      JSON.stringify({ ok, mesaj: sonuc?.message ?? null }),
+      {
+        status: ok ? 200 : 502,
+        headers: { ...CORS, "Content-Type": "application/json" },
+      },
+    );
   } catch {
     return new Response(JSON.stringify({ ok: false, hata: "geçersiz istek" }), {
       status: 400,
