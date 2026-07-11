@@ -1,23 +1,42 @@
 // Katman 1 — Karar Motoru (deterministik, AI değil)
-// Hesap sırası brief Bölüm 2'deki formülü birebir izler:
-//   CIF = ürün bedeli + kargo + sigorta
-//   gümrük vergisi = CIF × oran
-//   ÖTV = (CIF + gümrük vergisi) × ÖTV oranı
-//   KDV = (CIF + gümrük vergisi + ÖTV) × %20
-//   + ardiye + (müşavirli senaryoda) müşavirlik ücreti
+//
+// İki rejim vardır (rates.ts başındaki kaynak notlarına bakın):
+//
+// MAKTU (bireysel posta/hızlı kargo; kıymet ≤ 1500 €, brüt ≤ 30 kg):
+//   vergi = CIF × (AB %30 | diğer %60), kitapta %0
+//   + ÖTV (IV) listesi eşyasına ilave CIF × %20
+//   Bu rejimde ayrıca KDV alınmaz.
+//
+// STANDART (ticari gönderi veya maktu sınırlarını aşan eşya):
+//   gümrük vergisi = CIF × tarife oranı (AB menşeli ATR ile %0)
+//   ÖTV = (CIF + gümrük vergisi) × oran
+//   KDV = (CIF + gümrük vergisi + ÖTV) × oran
+//
+// Her iki rejimde de ardiye tahmini eklenir.
 
 import {
   ARDIYE_TABLOSU,
+  BIREYSEL_YASAKLI,
   DEGMEZ_ORAN_ESIGI,
-  GUMRUK_VERGISI_ORANI,
   KDV_ORANI,
-  KENDIN_YAP_DEGER_ESIGI,
-  KISITLI_KATEGORILER,
+  MAKTU_AGIRLIK_LIMITI_KG,
+  MAKTU_KIYMET_LIMITI_EUR,
+  MAKTU_VERGISIZ_KATEGORILER,
+  MAKTU_VERGI_ORANI,
   MUSAVIRLIK_UCRETI,
-  OTV_ORANI,
+  OTV_IV_EK_ORANI,
+  OTV_IV_KATEGORILER,
+  STANDART_GUMRUK_VERGISI,
+  STANDART_OTV_ORANI,
   VARSAYILAN_BEKLEME_GUNU,
+  VARSAYILAN_EUR_TRY,
 } from './rates';
-import type { KararSonucu, MaliyetDokumu, PaketGirdisi } from './types';
+import type {
+  KararSonucu,
+  MaliyetDokumu,
+  PaketGirdisi,
+  Rejim,
+} from './types';
 
 function yuvarla(tutar: number): number {
   return Math.round(tutar * 100) / 100;
@@ -42,26 +61,67 @@ function beklemeGunu(girdi: PaketGirdisi): number {
   return girdi.gumrukteGecenGun ?? VARSAYILAN_BEKLEME_GUNU;
 }
 
+/** Gönderinin tabi olduğu rejimi belirler */
+export function rejimBelirle(girdi: PaketGirdisi, cifEur: number): Rejim {
+  if (girdi.gonderiTipi === 'ticari') return 'STANDART';
+  if (cifEur > MAKTU_KIYMET_LIMITI_EUR) return 'STANDART';
+  if ((girdi.agirlikKg ?? 0) > MAKTU_AGIRLIK_LIMITI_KG) return 'STANDART';
+  return 'MAKTU';
+}
+
+/** Bireysel gönderide getirilmesi yasak eşya kontrolü */
+export function engelKontrol(girdi: PaketGirdisi): string[] {
+  if (girdi.gonderiTipi !== 'bireysel') return [];
+  const engel = BIREYSEL_YASAKLI.get(girdi.kategori);
+  return engel ? [engel] : [];
+}
+
 export function hesaplaMaliyet(girdi: PaketGirdisi): MaliyetDokumu {
   if (!(girdi.urunBedeli > 0)) {
-    throw new Error('Ürün bedeli 0\'dan büyük olmalı');
+    throw new Error("Ürün bedeli 0'dan büyük olmalı");
   }
   if (girdi.kargoUcreti < 0 || (girdi.sigorta ?? 0) < 0) {
     throw new Error('Kargo ve sigorta negatif olamaz');
   }
 
+  const kur = girdi.eurTry && girdi.eurTry > 0 ? girdi.eurTry : VARSAYILAN_EUR_TRY;
   const cif = girdi.urunBedeli + girdi.kargoUcreti + (girdi.sigorta ?? 0);
-  const gumrukVergisi = cif * GUMRUK_VERGISI_ORANI[girdi.mensei];
-  const otv = (cif + gumrukVergisi) * OTV_ORANI[girdi.kategori];
-  const kdv = (cif + gumrukVergisi + otv) * KDV_ORANI;
-  const ardiye = hesaplaArdiye(beklemeGunu(girdi));
+  const cifEur = cif / kur;
+  const rejim = rejimBelirle(girdi, cifEur);
 
+  let maktuVergi = 0;
+  let otvIvEk = 0;
+  let gumrukVergisi = 0;
+  let otv = 0;
+  let kdv = 0;
+
+  if (rejim === 'MAKTU') {
+    const oran = MAKTU_VERGISIZ_KATEGORILER.has(girdi.kategori)
+      ? 0
+      : MAKTU_VERGI_ORANI[girdi.mensei];
+    maktuVergi = cif * oran;
+    if (OTV_IV_KATEGORILER.has(girdi.kategori)) {
+      otvIvEk = cif * OTV_IV_EK_ORANI;
+    }
+  } else {
+    gumrukVergisi = cif * STANDART_GUMRUK_VERGISI[girdi.kategori][girdi.mensei];
+    otv = (cif + gumrukVergisi) * STANDART_OTV_ORANI[girdi.kategori];
+    kdv = (cif + gumrukVergisi + otv) * KDV_ORANI[girdi.kategori];
+  }
+
+  const ardiye = hesaplaArdiye(beklemeGunu(girdi));
   const musavirlikOrta = (MUSAVIRLIK_UCRETI.min + MUSAVIRLIK_UCRETI.max) / 2;
-  const toplamKendinYap = gumrukVergisi + otv + kdv + ardiye;
+  const toplamKendinYap =
+    maktuVergi + otvIvEk + gumrukVergisi + otv + kdv + ardiye;
   const toplamMusavirli = toplamKendinYap + musavirlikOrta;
 
   return {
+    rejim,
     cif: yuvarla(cif),
+    cifEur: yuvarla(cifEur),
+    kur: yuvarla(kur),
+    maktuVergi: yuvarla(maktuVergi),
+    otvIvEk: yuvarla(otvIvEk),
     gumrukVergisi: yuvarla(gumrukVergisi),
     otv: yuvarla(otv),
     kdv: yuvarla(kdv),
@@ -79,39 +139,49 @@ export function hesaplaMaliyet(girdi: PaketGirdisi): MaliyetDokumu {
 
 export function kararVer(girdi: PaketGirdisi): KararSonucu {
   const dokum = hesaplaMaliyet(girdi);
+  const engeller = engelKontrol(girdi);
   const gerekce: string[] = [];
+
+  // 0) Bireysel gönderiyle getirilmesi yasak eşya: vergi hesabı anlamsız
+  if (engeller.length > 0) {
+    gerekce.push(
+      'Bu eşya bireysel posta/hızlı kargo gönderisiyle Türkiye\'ye getirilemiyor.',
+      'Göndericiden iade talep etmek en az kayıplı seçenek.',
+      'İşletme adına ticari ithalat mümkün olabilir — bunun için müşavir desteği gerekir.',
+    );
+    return { oneri: 'GETIRILEMEZ', gerekce, engeller, dokum };
+  }
 
   // 1) En ucuz senaryo (kendin yap) bile eşiği aşıyorsa: DEĞMEZ
   if (dokum.maliyetOrani > DEGMEZ_ORAN_ESIGI) {
     gerekce.push(
       `Vergiler ve masraflar ürün bedelinin %${Math.round(dokum.maliyetOrani * 100)}'i kadar — eşik %${Math.round(DEGMEZ_ORAN_ESIGI * 100)}.`,
-      'Bu paket için iade veya gümrükte terk/imha talebini değerlendirin.',
+      'Kabul etmeyip göndericiye iade veya gümrükte terk seçeneğini değerlendirin.',
     );
-    return { oneri: 'DEGMEZ', gerekce, dokum };
+    return { oneri: 'DEGMEZ', gerekce, engeller, dokum };
   }
 
-  // 2) Düşük değerli + kısıtsız/ÖTV'siz: KENDİN YAP
-  const kisitli =
-    KISITLI_KATEGORILER.has(girdi.kategori) || OTV_ORANI[girdi.kategori] > 0;
-  if (girdi.urunBedeli < KENDIN_YAP_DEGER_ESIGI && !kisitli) {
+  // 2) Maktu rejim: operatör (PTT/hızlı kargo) beyanı zaten senin adına yapar
+  if (dokum.rejim === 'MAKTU') {
     gerekce.push(
-      `Ürün bedeli ${KENDIN_YAP_DEGER_ESIGI.toLocaleString('tr-TR')} TL eşiğinin altında ve kategori kısıtlı değil.`,
-      'BİLGE sistemi üzerinden kendi beyanınızı verebilirsiniz — adım adım rehberimiz var.',
+      `Gönderi tek ve maktu vergi kapsamında (kıymet ${MAKTU_KIYMET_LIMITI_EUR} € ve ${MAKTU_AGIRLIK_LIMITI_KG} kg sınırının altında).`,
+      'Beyanı taşıyıcı firma (PTT/hızlı kargo operatörü) senin adına düzenler; sana düşen vergiyi online ödemek.',
+      'Bu süreç için müşavire genellikle gerek yoktur.',
     );
-    return { oneri: 'KENDIN_YAP', gerekce, dokum };
+    return { oneri: 'KENDIN_YAP', gerekce, engeller, dokum };
   }
 
-  // 3) Yüksek değer veya kısıtlı/karmaşık kategori: MÜŞAVİR TUT
-  if (kisitli) {
+  // 3) Standart rejim: beyanname, GTİP tespiti, izinler — müşavir önerilir
+  if (girdi.gonderiTipi === 'ticari') {
+    gerekce.push('Ticari nitelikli gönderiler maktu vergi kapsamına girmez; standart ithalat beyannamesi (TCGB) gerekir.');
+  } else {
     gerekce.push(
-      'Kategori kısıtlı veya ÖTV kapsamında (izin/ek beyan süreci gerekebilir).',
+      `Kıymet/ağırlık maktu rejim sınırını aşıyor (${MAKTU_KIYMET_LIMITI_EUR} € / ${MAKTU_AGIRLIK_LIMITI_KG} kg) — standart ithalat beyannamesi gerekir.`,
     );
   }
-  if (girdi.urunBedeli >= KENDIN_YAP_DEGER_ESIGI) {
-    gerekce.push(
-      `Ürün bedeli ${KENDIN_YAP_DEGER_ESIGI.toLocaleString('tr-TR')} TL eşiğinin üzerinde — hata maliyeti yüksek.`,
-    );
-  }
-  gerekce.push('Lisanslı bir gümrük müşaviriyle ilerlemenizi öneriyoruz.');
-  return { oneri: 'MUSAVIR_TUT', gerekce, dokum };
+  gerekce.push(
+    'GTİP tespiti, vergi hesabı ve olası izinler (TSE, TİTCK vb.) hata kaldırmaz; lisanslı bir gümrük müşaviriyle ilerlemeni öneriyoruz.',
+    'Düzenli ithalat yapacaksan ilk beyanı müşavirle yapıp süreci öğrenmek yaygın stratejidir (iş numunesi rehberimize bak).',
+  );
+  return { oneri: 'MUSAVIR_TUT', gerekce, engeller, dokum };
 }

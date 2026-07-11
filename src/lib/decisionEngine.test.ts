@@ -1,12 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { hesaplaArdiye, hesaplaMaliyet, kararVer } from './decisionEngine';
+import {
+  engelKontrol,
+  hesaplaArdiye,
+  hesaplaMaliyet,
+  kararVer,
+  rejimBelirle,
+} from './decisionEngine';
 import {
   DEGMEZ_ORAN_ESIGI,
-  KDV_ORANI,
-  KENDIN_YAP_DEGER_ESIGI,
+  MAKTU_KIYMET_LIMITI_EUR,
   MUSAVIRLIK_UCRETI,
 } from './rates';
 import type { PaketGirdisi } from './types';
+
+// Testlerde deterministik kur: 1 € = 50 TL
+const KUR = 50;
 
 const temelGirdi: PaketGirdisi = {
   urunBedeli: 5000,
@@ -15,46 +23,110 @@ const temelGirdi: PaketGirdisi = {
   mensei: 'AB_DISI',
   kategori: 'genel',
   durum: 'yolda',
+  gonderiTipi: 'bireysel',
+  eurTry: KUR,
 };
 
-describe('hesaplaMaliyet', () => {
-  it('brief formülünü sırayla uygular (AB dışı, genel kategori)', () => {
+describe('rejimBelirle', () => {
+  it('bireysel, sınır altı gönderi MAKTU rejimde', () => {
     const d = hesaplaMaliyet(temelGirdi);
-    const cif = 5500;
-    const gv = cif * 0.3;
-    const kdv = (cif + gv) * KDV_ORANI;
-    expect(d.cif).toBe(cif);
-    expect(d.gumrukVergisi).toBeCloseTo(gv, 2);
-    expect(d.otv).toBe(0);
-    expect(d.kdv).toBeCloseTo(kdv, 2);
-    expect(d.ardiye).toBe(0); // yolda → ardiye yok
-    expect(d.toplamKendinYap).toBeCloseTo(gv + kdv, 2);
+    expect(d.rejim).toBe('MAKTU');
   });
 
-  it('AB menşeli üründe gümrük vergisi 0', () => {
-    const d = hesaplaMaliyet({ ...temelGirdi, mensei: 'AB' });
+  it('ticari gönderi her zaman STANDART rejimde', () => {
+    const d = hesaplaMaliyet({ ...temelGirdi, gonderiTipi: 'ticari' });
+    expect(d.rejim).toBe('STANDART');
+  });
+
+  it('1500 € üzeri kıymet STANDART rejime geçer', () => {
+    const d = hesaplaMaliyet({
+      ...temelGirdi,
+      urunBedeli: (MAKTU_KIYMET_LIMITI_EUR + 100) * KUR,
+    });
+    expect(d.rejim).toBe('STANDART');
+  });
+
+  it('30 kg üzeri ağırlık STANDART rejime geçer', () => {
+    expect(rejimBelirle({ ...temelGirdi, agirlikKg: 31 }, 100)).toBe(
+      'STANDART',
+    );
+    expect(rejimBelirle({ ...temelGirdi, agirlikKg: 30 }, 100)).toBe('MAKTU');
+  });
+});
+
+describe('hesaplaMaliyet — MAKTU rejim', () => {
+  it('AB dışı genel eşyada %60 tek ve maktu vergi, ayrıca KDV yok', () => {
+    const d = hesaplaMaliyet(temelGirdi);
+    expect(d.maktuVergi).toBeCloseTo(5500 * 0.6, 2);
+    expect(d.kdv).toBe(0);
     expect(d.gumrukVergisi).toBe(0);
-    expect(d.kdv).toBeCloseTo(5500 * KDV_ORANI, 2);
+    expect(d.otv).toBe(0);
+    expect(d.toplamKendinYap).toBeCloseTo(3300, 2);
   });
 
-  it('ÖTV, gümrük vergisi dahil matrah üzerinden hesaplanır (elektronik)', () => {
+  it('AB menşeli eşyada %30 uygulanır', () => {
+    const d = hesaplaMaliyet({ ...temelGirdi, mensei: 'AB' });
+    expect(d.maktuVergi).toBeCloseTo(5500 * 0.3, 2);
+  });
+
+  it('ÖTV IV listesi eşyasına (elektronik) ilave %20 eklenir', () => {
     const d = hesaplaMaliyet({ ...temelGirdi, kategori: 'elektronik' });
-    const matrah = 5500 * 1.3;
-    expect(d.otv).toBeCloseTo(matrah * 0.2, 2);
-    expect(d.kdv).toBeCloseTo((matrah + d.otv) * KDV_ORANI, 2);
+    expect(d.otvIvEk).toBeCloseTo(5500 * 0.2, 2);
+    expect(d.toplamKendinYap).toBeCloseTo(5500 * 0.6 + 5500 * 0.2, 2);
   });
 
-  it('CIF sigortayı da içerir', () => {
+  it('kişisel kitapta maktu vergi %0', () => {
+    const d = hesaplaMaliyet({ ...temelGirdi, kategori: 'kitap' });
+    expect(d.maktuVergi).toBe(0);
+    expect(d.otvIvEk).toBe(0);
+    expect(d.toplamKendinYap).toBe(0);
+  });
+
+  it('CIF sigortayı da içerir ve Euro karşılığı kurla hesaplanır', () => {
     const d = hesaplaMaliyet({ ...temelGirdi, sigorta: 250 });
     expect(d.cif).toBe(5750);
+    expect(d.cifEur).toBeCloseTo(5750 / KUR, 2);
+  });
+});
+
+describe('hesaplaMaliyet — STANDART rejim', () => {
+  const ticariGirdi: PaketGirdisi = {
+    ...temelGirdi,
+    gonderiTipi: 'ticari',
+    kategori: 'elektronik',
+  };
+
+  it('gümrük vergisi → ÖTV → KDV sırasıyla kademeli matrah kullanır', () => {
+    const d = hesaplaMaliyet(ticariGirdi);
+    const cif = 5500;
+    const gv = cif * 0.05;
+    const otv = (cif + gv) * 0.2;
+    const kdv = (cif + gv + otv) * 0.2;
+    expect(d.gumrukVergisi).toBeCloseTo(gv, 2);
+    expect(d.otv).toBeCloseTo(otv, 2);
+    expect(d.kdv).toBeCloseTo(kdv, 2);
+    expect(d.maktuVergi).toBe(0);
+  });
+
+  it('AB menşeli eşyada gümrük vergisi 0 (ATR)', () => {
+    const d = hesaplaMaliyet({ ...ticariGirdi, mensei: 'AB' });
+    expect(d.gumrukVergisi).toBe(0);
+    expect(d.kdv).toBeGreaterThan(0);
+  });
+
+  it('kitapta KDV de 0', () => {
+    const d = hesaplaMaliyet({ ...ticariGirdi, kategori: 'kitap' });
+    expect(d.kdv).toBe(0);
   });
 
   it('müşavirli toplam = kendin yap + müşavirlik orta ücreti', () => {
-    const d = hesaplaMaliyet(temelGirdi);
+    const d = hesaplaMaliyet(ticariGirdi);
     const orta = (MUSAVIRLIK_UCRETI.min + MUSAVIRLIK_UCRETI.max) / 2;
     expect(d.toplamMusavirli).toBeCloseTo(d.toplamKendinYap + orta, 2);
   });
+});
 
+describe('hesaplaMaliyet — doğrulama', () => {
   it('geçersiz girdide hata fırlatır', () => {
     expect(() => hesaplaMaliyet({ ...temelGirdi, urunBedeli: 0 })).toThrow();
     expect(() => hesaplaMaliyet({ ...temelGirdi, kargoUcreti: -1 })).toThrow();
@@ -77,9 +149,44 @@ describe('hesaplaArdiye', () => {
   });
 });
 
+describe('engelKontrol', () => {
+  it('bireysel cep telefonu gönderisi engellidir', () => {
+    expect(
+      engelKontrol({ ...temelGirdi, kategori: 'telefon' }).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it('bireysel kozmetik gönderisi engellidir', () => {
+    expect(
+      engelKontrol({ ...temelGirdi, kategori: 'kozmetik' }).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it('ticari gönderide bireysel yasakları uygulanmaz', () => {
+    expect(
+      engelKontrol({
+        ...temelGirdi,
+        gonderiTipi: 'ticari',
+        kategori: 'kozmetik',
+      }),
+    ).toHaveLength(0);
+  });
+});
+
 describe('kararVer', () => {
+  it('bireysel telefon için GETIRILEMEZ döner', () => {
+    const sonuc = kararVer({ ...temelGirdi, kategori: 'telefon' });
+    expect(sonuc.oneri).toBe('GETIRILEMEZ');
+    expect(sonuc.engeller.length).toBeGreaterThan(0);
+  });
+
+  it('bireysel kozmetik için GETIRILEMEZ döner', () => {
+    const sonuc = kararVer({ ...temelGirdi, kategori: 'kozmetik' });
+    expect(sonuc.oneri).toBe('GETIRILEMEZ');
+  });
+
   it('maliyet oranı eşiği aşınca DEGMEZ döner', () => {
-    // Ucuz ürün + pahalı kargo → vergiler ürün bedelini aşar
+    // AB dışı %60 maktu: 300 TL ürün + 900 TL kargo → vergi ürünün 2.4 katı
     const sonuc = kararVer({
       ...temelGirdi,
       urunBedeli: 300,
@@ -89,29 +196,31 @@ describe('kararVer', () => {
     expect(sonuc.oneri).toBe('DEGMEZ');
   });
 
-  it('düşük değerli kısıtsız ürün için KENDIN_YAP döner', () => {
-    const sonuc = kararVer({ ...temelGirdi, kategori: 'kitap', mensei: 'AB' });
+  it('maktu rejimdeki normal gönderi için KENDIN_YAP döner', () => {
+    const sonuc = kararVer({ ...temelGirdi, mensei: 'AB', kategori: 'kitap' });
     expect(sonuc.oneri).toBe('KENDIN_YAP');
+    expect(sonuc.dokum.rejim).toBe('MAKTU');
   });
 
-  it('eşik üstü değerde MUSAVIR_TUT döner', () => {
+  it('ticari gönderi için MUSAVIR_TUT döner', () => {
     const sonuc = kararVer({
       ...temelGirdi,
-      urunBedeli: KENDIN_YAP_DEGER_ESIGI,
-      mensei: 'AB',
-      kategori: 'kitap',
+      gonderiTipi: 'ticari',
+      urunBedeli: 20000,
+      kargoUcreti: 1000,
     });
     expect(sonuc.oneri).toBe('MUSAVIR_TUT');
+    expect(sonuc.dokum.rejim).toBe('STANDART');
   });
 
-  it('düşük değerli ama kısıtlı kategoride (kozmetik) MUSAVIR_TUT döner', () => {
+  it('1500 € üzeri bireysel gönderi standart rejime düşer ve müşavir önerilir', () => {
     const sonuc = kararVer({
       ...temelGirdi,
-      urunBedeli: 2000,
-      kargoUcreti: 100,
       mensei: 'AB',
-      kategori: 'kozmetik',
+      urunBedeli: 1600 * KUR,
+      kargoUcreti: 0,
     });
+    expect(sonuc.dokum.rejim).toBe('STANDART');
     expect(sonuc.oneri).toBe('MUSAVIR_TUT');
   });
 
