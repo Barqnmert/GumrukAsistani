@@ -176,11 +176,21 @@ function Sonuc() {
         </ul>
 
         {sonuc.oneri === 'KENDIN_YAP' && (
-          <div className="cta-grubu">
-            <Link className="btn" to="/rehber">
-              Adım adım rehbere git
-            </Link>
-          </div>
+          <>
+            <div className="cta-grubu">
+              <Link className="btn" to="/rehber">
+                Adım adım rehbere git
+              </Link>
+              <Link
+                className="btn btn-ikincil"
+                to="/musavir"
+                state={{ girdi, sonuc }}
+              >
+                Yine de müşavir tutmak istiyorum
+              </Link>
+            </div>
+            {musavirNotu}
+          </>
         )}
 
         {sonuc.oneri === 'MUSAVIR_TUT' && (
@@ -326,33 +336,30 @@ function Sonuc() {
                     <td>Kendin yaparsan toplam ek maliyet</td>
                     <td className="tutar">{tl(d.toplamKendinYap)} TL</td>
                   </tr>
-                  {!maktu && (
-                    <>
-                      <tr>
-                        <td>
-                          Müşavirlik ücreti aralığı
-                          <span className="ipucu" style={{ display: 'block' }}>
-                            2026 Asgari Ücret Tarifesi referansı, KDV hariç
-                          </span>
-                        </td>
-                        <td className="tutar">
-                          {tl(d.musavirlikUcreti.min)} –{' '}
-                          {tl(d.musavirlikUcreti.max)} TL
-                        </td>
-                      </tr>
-                      <tr className="toplam">
-                        <td>Müşavirli toplam (orta değerle)</td>
-                        <td className="tutar">{tl(d.toplamMusavirli)} TL</td>
-                      </tr>
-                    </>
-                  )}
+                  <tr>
+                    <td>
+                      Müşavirlik ücreti aralığı
+                      <span className="ipucu" style={{ display: 'block' }}>
+                        2026 Asgari Ücret Tarifesi referansı, KDV hariç
+                        {maktu &&
+                          ' — bu rejimde müşavir genellikle gerekmez, tercih edersen'}
+                      </span>
+                    </td>
+                    <td className="tutar">
+                      {tl(d.musavirlikUcreti.min)} –{' '}
+                      {tl(d.musavirlikUcreti.max)} TL
+                    </td>
+                  </tr>
+                  <tr className="toplam">
+                    <td>Müşavirli toplam (orta değerle)</td>
+                    <td className="tutar">{tl(d.toplamMusavirli)} TL</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
             <p className="ipucu">
               Ek maliyet / ürün bedeli oranı: %{Math.round(d.maliyetOrani * 100)}
-              {!maktu &&
-                ` (müşavirlik ücreti dahil: %${Math.round(d.kararOrani * 100)})`}
+              {` (müşavirlik ücreti dahil: %${Math.round((d.toplamMusavirli / girdi.urunBedeli) * 100)})`}
               {' — '}ürün bedeli: {tl(girdi.urunBedeli)} TL. Tutarlar tahmindir;
               kesin vergi gümrük idaresinin kıymet tespitine göre belirlenir.
             </p>

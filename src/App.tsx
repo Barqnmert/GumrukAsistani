@@ -1,4 +1,11 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { useEffect } from 'react';
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import TriageForm from './pages/TriageForm';
@@ -8,9 +15,19 @@ import RehberDetay from './pages/RehberDetay';
 import MusavirForm from './pages/MusavirForm';
 import Gizlilik from './pages/Gizlilik';
 
+/** SPA'da sayfa geçişinde kaydırma konumu korunur; her rotada en üstten başla */
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />

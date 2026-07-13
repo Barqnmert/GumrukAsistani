@@ -44,9 +44,9 @@ const ADIMLAR = [
 
 const SSS = [
   {
-    soru: '30 € muafiyeti gerçekten kalktı mı?',
+    soru: 'Düşük değerli paketler vergiden muaf mı?',
     cevap:
-      'Evet. 7 Ocak 2026 tarihli Resmî Gazete\'de yayımlanan Karar (10813) ile 6 Şubat 2026\'dan itibaren kıymeti ne olursa olsun her gönderi vergiye tabi. 1 €\'luk ürün de gümrük işleminden geçiyor.',
+      'Hayır. Karar 10813 uyarınca kıymeti ne olursa olsun her gönderi vergiye tabi; eski 30 € muafiyeti artık uygulanmıyor. 1 €\'luk ürün de gümrük işleminden geçiyor.',
   },
   {
     soru: 'Her paket için müşavir tutmam gerekiyor mu?',
@@ -84,7 +84,7 @@ function Home() {
   useSeo({
     baslik: 'Gümrük Vergisi Hesaplama 2026 — Paketim Gümrükte, Ne Yapmalıyım?',
     aciklama:
-      '30 € muafiyeti kalktı: AliExpress, Temu, Amazon paketinize ne kadar gümrük vergisi çıkacağını 2026 oranlarıyla ücretsiz hesaplayın. Değmezse söyleriz; değerse adım adım kendiniz çekin veya müşavir bulun.',
+      'AliExpress, Temu, Amazon paketinize ne kadar gümrük vergisi çıkacağını 2026 oranlarıyla ücretsiz hesaplayın. Değmezse söyleriz; değerse adım adım kendiniz çekin veya müşavir bulun.',
     yol: '/',
   });
 
@@ -95,7 +95,7 @@ function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_LD) }}
       />
       <section className="hero">
-        <p className="hero-ust">6 Şubat 2026: 30 € muafiyeti kalktı</p>
+        <p className="hero-ust">2026 güncel vergi oranlarıyla</p>
         <h1>
           Paketin gümrükte mi kaldı?
           <br />

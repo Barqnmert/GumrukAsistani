@@ -17,7 +17,7 @@ export const REHBERLER: Rehber[] = [
     slug: 'aliexpress',
     baslik: 'AliExpress / Temu paketi gümrükte — kendin çek',
     ozet:
-      'Çin çıkışlı e-ticaret paketlerinde beyanı taşıyıcı düzenler; sana kalan vergiyi online ödemek. 6 Şubat 2026 sonrası her kıymetteki paket vergili: AB dışından %60 (+ elektronikte %20).',
+      'Çin çıkışlı e-ticaret paketlerinde beyanı taşıyıcı düzenler; sana kalan vergiyi online ödemek. Her kıymetteki paket vergiye tabi: AB dışından %60 (+ elektronikte %20).',
     kimeUygun:
       'AliExpress, Temu, Shein gibi platformlardan gelen, kıymeti 1500 €\'yu ve 30 kg\'ı aşmayan bireysel paketler. Cep telefonu ve kozmetik bu yolla GELEMEZ.',
     adimlar: [
@@ -107,7 +107,7 @@ export const REHBERLER: Rehber[] = [
     slug: 'hediye',
     baslik: 'Yurt dışından hediye geldi — ne yapmalı?',
     ozet:
-      '6 Şubat 2026 sonrası hediye gönderiler de istisnasız vergiye tabi: kıymeti ne olursa olsun beyan ve vergi var. Süreç genelde PTT üzerinden yürür.',
+      'Hediye gönderiler de istisnasız vergiye tabi: kıymeti ne olursa olsun beyan ve vergi var. Süreç genelde PTT üzerinden yürür.',
     kimeUygun:
       'Yurt dışındaki yakınlarından posta yoluyla kişisel eşya/hediye gelenler.',
     adimlar: [
