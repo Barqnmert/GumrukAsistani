@@ -12,7 +12,7 @@ Detaylı ürün brief'i: [docs/brief.md](docs/brief.md)
 
 - Vite + React 19 + TypeScript
 - Supabase (başvuru kayıtları, RLS insert-only)
-- Vercel (deploy) — canlı: https://gumruk-asistani.vercel.app
+- Vercel (deploy) — canlı: https://www.gümrüktekalmasın.com
 
 ## Geliştirme
 
