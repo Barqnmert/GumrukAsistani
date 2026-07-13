@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { kararVer } from '../lib/decisionEngine';
 import { kaydetBasvuru } from '../lib/basvuru';
+import { MUSAVIR_HIZMETI_AKTIF } from '../lib/flags';
 import { useSeo } from '../lib/seo';
 import type { KararSonucu, Kategori, PaketGirdisi } from '../lib/types';
 
@@ -12,12 +13,22 @@ interface GelenState {
 }
 
 function MusavirForm() {
-  useSeo({
-    baslik: 'Gümrük Müşaviri Bul — Doğrulanmış Firmalarla Ücretsiz Eşleştirme',
-    aciklama:
-      'Paketiniz standart beyanname mi istiyor? TOBB siciline kayıtlı, doğrulanmış gümrük müşavirlik firmalarıyla sizi ücretsiz eşleştirelim. 1 iş günü içinde dönüş.',
-    yol: '/musavir',
-  });
+  useSeo(
+    MUSAVIR_HIZMETI_AKTIF
+      ? {
+          baslik:
+            'Gümrük Müşaviri Bul — Doğrulanmış Firmalarla Ücretsiz Eşleştirme',
+          aciklama:
+            'Paketiniz standart beyanname mi istiyor? TOBB siciline kayıtlı, doğrulanmış gümrük müşavirlik firmalarıyla sizi ücretsiz eşleştirelim. 1 iş günü içinde dönüş.',
+          yol: '/musavir',
+        }
+      : {
+          baslik: 'Gümrük Müşaviri Bul — Çok Yakında',
+          aciklama:
+            'Doğrulanmış gümrük müşavirlik firmalarıyla ücretsiz eşleştirme hizmetimiz çok yakında. Anlaşmalı firmalarla görüşmelerimiz sürüyor.',
+          yol: '/musavir',
+        },
+  );
 
   const location = useLocation();
   const gelen = (location.state ?? {}) as GelenState;
@@ -66,6 +77,46 @@ function MusavirForm() {
     } finally {
       setGonderiliyor(false);
     }
+  }
+
+  // Anlaşmalı müşavir firmaları netleşene kadar form yayında değil;
+  // bayrak true yapıldığında aşağıdaki form aynen geri gelir.
+  if (!MUSAVIR_HIZMETI_AKTIF) {
+    return (
+      <main>
+        <header className="sayfa-baslik">
+          <h1>Müşavir eşleştirme — çok yakında</h1>
+          <p>
+            Şu anda anlaşma yapacağımız gümrük müşavirleri ve müşavirlik
+            firmalarıyla görüşme halindeyiz.
+          </p>
+        </header>
+
+        <div className="kart">
+          <p>
+            Sizi yanıltmamak için talep formunu, anlaşmalar tamamlanana kadar
+            kapalı tutuyoruz. Sicili doğrulanmış müşavirlik firmalarıyla
+            anlaşmalarımız netleştiğinde bu sayfa yeniden açılacak ve
+            talebiniz doğrudan ilgili firmaya iletilecek.
+          </p>
+          {gelen.sonuc && (
+            <p className="ipucu">
+              Hesaplama sonucunuza göre paketiniz müşavir desteği gerektiriyor.
+              Bu sırada süreci tanımak isterseniz iş numunesi rehberimize göz
+              atabilirsiniz.
+            </p>
+          )}
+          <div className="cta-grubu">
+            <Link className="btn" to="/rehber">
+              Bu sırada: adım adım rehberler
+            </Link>
+            <Link className="btn btn-ikincil" to="/hesapla">
+              Paket maliyetini hesapla
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   if (tamamlandi) {

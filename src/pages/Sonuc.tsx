@@ -1,4 +1,5 @@
 import { Link, Navigate, useLocation } from 'react-router-dom';
+import { MUSAVIR_HIZMETI_AKTIF } from '../lib/flags';
 import { useSeo } from '../lib/seo';
 import type { KararSonucu, PaketGirdisi } from '../lib/types';
 
@@ -61,6 +62,16 @@ function Sonuc() {
   const d = sonuc.dokum;
   const maktu = d.rejim === 'MAKTU';
 
+  // Müşavir hizmeti henüz yayında değilken müşavire yönlendiren
+  // butonların altında gösterilen bilgilendirme.
+  const musavirNotu = !MUSAVIR_HIZMETI_AKTIF && (
+    <p className="ipucu">
+      Müşavir eşleştirme hizmetimiz <strong>çok yakında</strong>: anlaşma
+      yapacağımız müşavirlik firmalarıyla görüşmelerimiz sürüyor. Butondan
+      detaylı bilgiye ulaşabilirsiniz.
+    </p>
+  );
+
   return (
     <main>
       <header className="sayfa-baslik">
@@ -85,14 +96,17 @@ function Sonuc() {
         )}
 
         {sonuc.oneri === 'MUSAVIR_TUT' && (
-          <div className="cta-grubu">
-            <Link className="btn" to="/musavir" state={{ girdi, sonuc }}>
-              Müşavir talebini başlat
-            </Link>
-            <Link className="btn btn-ikincil" to="/rehber/is-numunesi">
-              Önce süreci anlamak istiyorum
-            </Link>
-          </div>
+          <>
+            <div className="cta-grubu">
+              <Link className="btn" to="/musavir" state={{ girdi, sonuc }}>
+                Müşavir talebini başlat
+              </Link>
+              <Link className="btn btn-ikincil" to="/rehber/is-numunesi">
+                Önce süreci anlamak istiyorum
+              </Link>
+            </div>
+            {musavirNotu}
+          </>
         )}
 
         {sonuc.oneri === 'DEGMEZ' && (
@@ -118,6 +132,7 @@ function Sonuc() {
                 </Link>
               )}
             </div>
+            {!maktu && musavirNotu}
           </div>
         )}
 
@@ -142,6 +157,7 @@ function Sonuc() {
                 İade sürecine bak
               </Link>
             </div>
+            {musavirNotu}
           </>
         )}
       </div>
