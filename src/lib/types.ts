@@ -34,6 +34,11 @@ export interface PaketGirdisi {
   gonderiTipi: GonderiTipi;
   /** Brüt ağırlık (kg) — 30 kg maktu rejim sınırı kontrolü için */
   agirlikKg?: number;
+  /**
+   * Bu takvim ayında kaçıncı gönderi — 5'i aşarsa maktu rejim uygulanamaz.
+   * Verilmezse limit aşımı yok varsayılır.
+   */
+  buAyKacinciGonderi?: number;
   /** Paket gümrükteyse kaç gündür beklediği (ardiye tahmini için) */
   gumrukteGecenGun?: number;
   /** EUR/TL kuru — verilmezse varsayılan referans kur kullanılır */
@@ -47,6 +52,11 @@ export interface MaliyetDokumu {
   cifEur: number;
   /** Hesapta kullanılan EUR/TL kuru */
   kur: number;
+  /**
+   * Kargo ücreti girilmediğinde kıymete eklenen emsal navlun (TL) —
+   * mevzuat gereği navlun ayrı gösterilmezse 3 € emsal eklenir.
+   */
+  emsalNavlun: number;
   /** MAKTU rejim: tek ve maktu vergi (AB %30 / diğer %60) */
   maktuVergi: number;
   /** MAKTU rejim: ÖTV IV sayılı liste eşyasına ilave %20 */
@@ -65,6 +75,12 @@ export interface MaliyetDokumu {
   toplamMusavirli: number;
   /** toplamKendinYap / urunBedeli */
   maliyetOrani: number;
+  /**
+   * DEĞMEZ eşiğiyle kıyaslanan gerçekçi oran: MAKTU rejimde kendin-yap
+   * toplamı, STANDART rejimde (müşavir önerildiği için) müşavirli toplam
+   * üzerinden hesaplanır.
+   */
+  kararOrani: number;
 }
 
 export interface KararSonucu {

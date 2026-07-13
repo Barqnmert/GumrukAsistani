@@ -43,6 +43,12 @@ export const MAKTU_AGIRLIK_LIMITI_KG = 30;
 export const AYLIK_GONDERI_LIMITI = 5;
 
 /**
+ * Navlun (kargo) faturada ayrı gösterilmiyorsa kıymete eklenen emsal
+ * navlun (€) — Ticaret Bakanlığı posta/hızlı kargo SSS.
+ */
+export const EMSAL_NAVLUN_EUR = 3;
+
+/**
  * Bireysel posta/hızlı kargo ile getirilmesi YASAK kategoriler ve gerekçeleri.
  * (Vergisi ödenmek istense dahi gümrükten çekilemez; iade/ticari ithalat gerekir.)
  */
@@ -99,10 +105,11 @@ export const KDV_ORANI: Record<Kategori, number> = {
 /* ── ORTAK ── */
 
 /**
- * Varsayılan EUR/TL referans kuru — canlı kur alınamadığında kullanılır.
- * src/lib/kur.ts canlı kuru Frankfurter (ECB) API'sinden çeker.
+ * Varsayılan EUR/TL ve USD/TL referans kurları — canlı kur alınamadığında
+ * kullanılır. src/lib/kur.ts canlı kurları Frankfurter (ECB) API'sinden çeker.
  */
-export const VARSAYILAN_EUR_TRY = 49;
+export const VARSAYILAN_EUR_TRY = 54;
+export const VARSAYILAN_USD_TRY = 46;
 
 /** Ardiye referans tablosu: gün aralığına göre günlük ücret (TL).
  * Operatöre göre değişir (PTT/hızlı kargo) — kaba referanstır. */

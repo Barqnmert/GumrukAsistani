@@ -9,7 +9,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const ALICI = "baranmertozturk@gmail.com";
-const SITE = "https://gumruk-asistani.vercel.app";
+const SITE = "https://www.xn--gmrktekalmasn-wobc17f.com";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",

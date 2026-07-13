@@ -39,6 +39,9 @@ function Layout() {
             <strong>tahminlerdir</strong>; resmî gümrük beyanı yerine geçmez.
             Kesin tutarlar gümrük idaresinin kıymet tespitine göre değişebilir.
           </p>
+          <p>
+            <Link to="/gizlilik">Gizlilik ve KVKK Aydınlatma Metni</Link>
+          </p>
         </div>
       </footer>
     </div>

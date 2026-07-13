@@ -55,8 +55,10 @@ function MusavirForm() {
     setHata('');
     setGonderiliyor(true);
     try {
-      // Sonuç ekranından gelindiyse oradaki hesap kullanılır;
-      // doğrudan gelindiyse form bilgisinden yeniden hesaplanır.
+      // Sonuç ekranından gelindiyse oradaki hesap kullanılır; doğrudan
+      // gelindiyse form bilgisinden yeniden hesaplanır. Doğrudan gelişte
+      // menşe/durum bilinmediği için AB dışı + gümrükte bekliyor varsayılır —
+      // kayıt istatistiği okurken bu varsayım akılda tutulmalı.
       const girdi: PaketGirdisi =
         gelen.girdi ?? {
           urunBedeli: Number(paketDegeri),
@@ -221,6 +223,12 @@ function MusavirForm() {
         </div>
 
         {hata && <p className="form-hata">{hata}</p>}
+
+        <p className="ipucu">
+          Talebi göndererek iletişim bilgilerinizin eşleştirme amacıyla
+          anlaşmalı müşavirlik firmasına iletilmesini kabul etmiş olursunuz —{' '}
+          <Link to="/gizlilik">gizlilik ve KVKK metni</Link>.
+        </p>
 
         <button type="submit" disabled={gonderiliyor}>
           {gonderiliyor ? 'Gönderiliyor…' : 'Talebi gönder'}

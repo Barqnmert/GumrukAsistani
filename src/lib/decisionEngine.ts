@@ -16,8 +16,10 @@
 
 import {
   ARDIYE_TABLOSU,
+  AYLIK_GONDERI_LIMITI,
   BIREYSEL_YASAKLI,
   DEGMEZ_ORAN_ESIGI,
+  EMSAL_NAVLUN_EUR,
   KDV_ORANI,
   MAKTU_AGIRLIK_LIMITI_KG,
   MAKTU_KIYMET_LIMITI_EUR,
@@ -64,6 +66,7 @@ function beklemeGunu(girdi: PaketGirdisi): number {
 /** Gönderinin tabi olduğu rejimi belirler */
 export function rejimBelirle(girdi: PaketGirdisi, cifEur: number): Rejim {
   if (girdi.gonderiTipi === 'ticari') return 'STANDART';
+  if ((girdi.buAyKacinciGonderi ?? 0) > AYLIK_GONDERI_LIMITI) return 'STANDART';
   if (cifEur > MAKTU_KIYMET_LIMITI_EUR) return 'STANDART';
   if ((girdi.agirlikKg ?? 0) > MAKTU_AGIRLIK_LIMITI_KG) return 'STANDART';
   return 'MAKTU';
@@ -85,7 +88,14 @@ export function hesaplaMaliyet(girdi: PaketGirdisi): MaliyetDokumu {
   }
 
   const kur = girdi.eurTry && girdi.eurTry > 0 ? girdi.eurTry : VARSAYILAN_EUR_TRY;
-  const cif = girdi.urunBedeli + girdi.kargoUcreti + (girdi.sigorta ?? 0);
+  // Navlun faturada ayrı gösterilmiyorsa (kargo girilmemişse) kıymete
+  // 3 € emsal navlun eklenir — yalnızca bireysel gönderide.
+  const emsalNavlun =
+    girdi.gonderiTipi === 'bireysel' && girdi.kargoUcreti === 0
+      ? EMSAL_NAVLUN_EUR * kur
+      : 0;
+  const cif =
+    girdi.urunBedeli + girdi.kargoUcreti + (girdi.sigorta ?? 0) + emsalNavlun;
   const cifEur = cif / kur;
   const rejim = rejimBelirle(girdi, cifEur);
 
@@ -114,12 +124,16 @@ export function hesaplaMaliyet(girdi: PaketGirdisi): MaliyetDokumu {
   const toplamKendinYap =
     maktuVergi + otvIvEk + gumrukVergisi + otv + kdv + ardiye;
   const toplamMusavirli = toplamKendinYap + musavirlikOrta;
+  // DEĞMEZ eşiğiyle kıyaslanan gerçekçi oran: standart rejimde öneri
+  // müşavir olduğu için müşavirli toplam esas alınır.
+  const kararToplami = rejim === 'MAKTU' ? toplamKendinYap : toplamMusavirli;
 
   return {
     rejim,
     cif: yuvarla(cif),
     cifEur: yuvarla(cifEur),
     kur: yuvarla(kur),
+    emsalNavlun: yuvarla(emsalNavlun),
     maktuVergi: yuvarla(maktuVergi),
     otvIvEk: yuvarla(otvIvEk),
     gumrukVergisi: yuvarla(gumrukVergisi),
@@ -134,6 +148,7 @@ export function hesaplaMaliyet(girdi: PaketGirdisi): MaliyetDokumu {
     toplamKendinYap: yuvarla(toplamKendinYap),
     toplamMusavirli: yuvarla(toplamMusavirli),
     maliyetOrani: yuvarla(toplamKendinYap / girdi.urunBedeli),
+    kararOrani: yuvarla(kararToplami / girdi.urunBedeli),
   };
 }
 
@@ -152,10 +167,12 @@ export function kararVer(girdi: PaketGirdisi): KararSonucu {
     return { oneri: 'GETIRILEMEZ', gerekce, engeller, dokum };
   }
 
-  // 1) En ucuz senaryo (kendin yap) bile eşiği aşıyorsa: DEĞMEZ
-  if (dokum.maliyetOrani > DEGMEZ_ORAN_ESIGI) {
+  // 1) Gerçekçi toplam (standart rejimde müşavir dahil) eşiği aşıyorsa: DEĞMEZ
+  if (dokum.kararOrani > DEGMEZ_ORAN_ESIGI) {
     gerekce.push(
-      `Vergiler ve masraflar ürün bedelinin %${Math.round(dokum.maliyetOrani * 100)}'i kadar — eşik %${Math.round(DEGMEZ_ORAN_ESIGI * 100)}.`,
+      dokum.rejim === 'MAKTU'
+        ? `Vergiler ve masraflar ürün bedelinin %${Math.round(dokum.kararOrani * 100)}'i kadar — eşik %${Math.round(DEGMEZ_ORAN_ESIGI * 100)}.`
+        : `Vergiler, masraflar ve müşavirlik ücreti (bu gönderi standart beyanname istediği için) ürün bedelinin %${Math.round(dokum.kararOrani * 100)}'i kadar — eşik %${Math.round(DEGMEZ_ORAN_ESIGI * 100)}.`,
       'Kabul etmeyip göndericiye iade veya gümrükte terk seçeneğini değerlendirin.',
     );
     return { oneri: 'DEGMEZ', gerekce, engeller, dokum };
@@ -174,6 +191,10 @@ export function kararVer(girdi: PaketGirdisi): KararSonucu {
   // 3) Standart rejim: beyanname, GTİP tespiti, izinler — müşavir önerilir
   if (girdi.gonderiTipi === 'ticari') {
     gerekce.push('Ticari nitelikli gönderiler maktu vergi kapsamına girmez; standart ithalat beyannamesi (TCGB) gerekir.');
+  } else if ((girdi.buAyKacinciGonderi ?? 0) > AYLIK_GONDERI_LIMITI) {
+    gerekce.push(
+      `Takvim ayındaki ${AYLIK_GONDERI_LIMITI} gönderi sınırı aşıldığı için maktu vergi uygulanamaz — standart ithalat beyannamesi gerekir.`,
+    );
   } else {
     gerekce.push(
       `Kıymet/ağırlık maktu rejim sınırını aşıyor (${MAKTU_KIYMET_LIMITI_EUR} € / ${MAKTU_AGIRLIK_LIMITI_KG} kg) — standart ithalat beyannamesi gerekir.`,

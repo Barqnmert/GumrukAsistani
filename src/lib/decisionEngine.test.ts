@@ -52,6 +52,15 @@ describe('rejimBelirle', () => {
     );
     expect(rejimBelirle({ ...temelGirdi, agirlikKg: 30 }, 100)).toBe('MAKTU');
   });
+
+  it('takvim ayındaki 5 gönderi sınırı aşılınca STANDART rejime geçer', () => {
+    expect(rejimBelirle({ ...temelGirdi, buAyKacinciGonderi: 6 }, 100)).toBe(
+      'STANDART',
+    );
+    expect(rejimBelirle({ ...temelGirdi, buAyKacinciGonderi: 5 }, 100)).toBe(
+      'MAKTU',
+    );
+  });
 });
 
 describe('hesaplaMaliyet — MAKTU rejim', () => {
@@ -86,6 +95,33 @@ describe('hesaplaMaliyet — MAKTU rejim', () => {
     const d = hesaplaMaliyet({ ...temelGirdi, sigorta: 250 });
     expect(d.cif).toBe(5750);
     expect(d.cifEur).toBeCloseTo(5750 / KUR, 2);
+  });
+
+  it('bireysel gönderide kargo girilmezse 3 € emsal navlun kıymete eklenir', () => {
+    const d = hesaplaMaliyet({ ...temelGirdi, kargoUcreti: 0 });
+    expect(d.emsalNavlun).toBeCloseTo(3 * KUR, 2);
+    expect(d.cif).toBeCloseTo(5000 + 3 * KUR, 2);
+    expect(d.maktuVergi).toBeCloseTo((5000 + 3 * KUR) * 0.6, 2);
+  });
+
+  it('kargo girilmişse emsal navlun eklenmez', () => {
+    const d = hesaplaMaliyet(temelGirdi);
+    expect(d.emsalNavlun).toBe(0);
+  });
+
+  it('ticari gönderide kargo 0 olsa da emsal navlun eklenmez', () => {
+    const d = hesaplaMaliyet({
+      ...temelGirdi,
+      gonderiTipi: 'ticari',
+      kargoUcreti: 0,
+    });
+    expect(d.emsalNavlun).toBe(0);
+    expect(d.cif).toBe(5000);
+  });
+
+  it('MAKTU rejimde kararOrani kendin-yap oranına eşittir', () => {
+    const d = hesaplaMaliyet(temelGirdi);
+    expect(d.kararOrani).toBeCloseTo(d.maliyetOrani, 2);
   });
 });
 
@@ -123,6 +159,12 @@ describe('hesaplaMaliyet — STANDART rejim', () => {
     const d = hesaplaMaliyet(ticariGirdi);
     const orta = (MUSAVIRLIK_UCRETI.min + MUSAVIRLIK_UCRETI.max) / 2;
     expect(d.toplamMusavirli).toBeCloseTo(d.toplamKendinYap + orta, 2);
+  });
+
+  it('STANDART rejimde kararOrani müşavirli toplam üzerinden hesaplanır', () => {
+    const d = hesaplaMaliyet(ticariGirdi);
+    expect(d.kararOrani).toBeCloseTo(d.toplamMusavirli / 5000, 2);
+    expect(d.kararOrani).toBeGreaterThan(d.maliyetOrani);
   });
 });
 
@@ -194,6 +236,31 @@ describe('kararVer', () => {
     });
     expect(sonuc.dokum.maliyetOrani).toBeGreaterThan(DEGMEZ_ORAN_ESIGI);
     expect(sonuc.oneri).toBe('DEGMEZ');
+  });
+
+  it('standart rejimde eşik müşavirli toplamla kıyaslanır (küçük ticari gönderi DEGMEZ)', () => {
+    // 10.000 TL ticari elektronik: vergiler ~%54, müşavirle ~%111 → DEĞMEZ
+    const sonuc = kararVer({
+      ...temelGirdi,
+      gonderiTipi: 'ticari',
+      kategori: 'elektronik',
+      urunBedeli: 10000,
+      kargoUcreti: 500,
+    });
+    expect(sonuc.dokum.kararOrani).toBeGreaterThan(DEGMEZ_ORAN_ESIGI);
+    expect(sonuc.oneri).toBe('DEGMEZ');
+    expect(sonuc.gerekce.join(' ')).toContain('müşavirlik');
+  });
+
+  it('aylık gönderi sınırı aşılınca bireysel gönderi standart rejime düşer', () => {
+    const sonuc = kararVer({
+      ...temelGirdi,
+      urunBedeli: 50000,
+      buAyKacinciGonderi: 6,
+    });
+    expect(sonuc.dokum.rejim).toBe('STANDART');
+    expect(sonuc.oneri).toBe('MUSAVIR_TUT');
+    expect(sonuc.gerekce.join(' ')).toContain('5 gönderi sınırı');
   });
 
   it('maktu rejimdeki normal gönderi için KENDIN_YAP döner', () => {

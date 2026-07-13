@@ -6,6 +6,7 @@ import Sonuc from './pages/Sonuc';
 import RehberIndex from './pages/RehberIndex';
 import RehberDetay from './pages/RehberDetay';
 import MusavirForm from './pages/MusavirForm';
+import Gizlilik from './pages/Gizlilik';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/rehber" element={<RehberIndex />} />
           <Route path="/rehber/:slug" element={<RehberDetay />} />
           <Route path="/musavir" element={<MusavirForm />} />
+          <Route path="/gizlilik" element={<Gizlilik />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

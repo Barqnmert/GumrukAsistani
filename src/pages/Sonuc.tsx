@@ -1,7 +1,15 @@
-import { Link, Navigate, useLocation } from 'react-router-dom';
+import { Link, Navigate, useLocation, useSearchParams } from 'react-router-dom';
+import { kararVer } from '../lib/decisionEngine';
 import { MUSAVIR_HIZMETI_AKTIF } from '../lib/flags';
 import { useSeo } from '../lib/seo';
-import type { KararSonucu, PaketGirdisi } from '../lib/types';
+import type {
+  Durum,
+  GonderiTipi,
+  KararSonucu,
+  Kategori,
+  Mensei,
+  PaketGirdisi,
+} from '../lib/types';
 
 const ONERI_GORUNUM = {
   DEGMEZ: {
@@ -42,6 +50,70 @@ interface SonucState {
   sonuc: KararSonucu;
 }
 
+const MENSEILER: ReadonlyArray<Mensei> = ['AB', 'AB_DISI'];
+const KATEGORILER: ReadonlyArray<Kategori> = [
+  'genel',
+  'elektronik',
+  'telefon',
+  'tekstil',
+  'kozmetik',
+  'kitap',
+];
+const DURUMLAR: ReadonlyArray<Durum> = [
+  'yolda',
+  'gumrukte_bekliyor',
+  'bildirim_geldi',
+];
+const TIPLER: ReadonlyArray<GonderiTipi> = ['bireysel', 'ticari'];
+
+/**
+ * Sayfa yenilenince/paylaşılınca state kaybolur; hesap girdisi URL
+ * parametrelerinden yeniden kurulur. Geçersiz/eksik parametrede null döner.
+ */
+function girdiOku(params: URLSearchParams): PaketGirdisi | null {
+  const bedel = Number(params.get('bedel'));
+  const kargo = Number(params.get('kargo') ?? 0);
+  const sigorta = Number(params.get('sigorta') ?? 0);
+  const mensei = params.get('mensei') as Mensei | null;
+  const kategori = params.get('kategori') as Kategori | null;
+  const durum = params.get('durum') as Durum | null;
+  const tip = params.get('tip') as GonderiTipi | null;
+  if (
+    !(bedel > 0) ||
+    !(kargo >= 0) ||
+    !(sigorta >= 0) ||
+    !mensei ||
+    !MENSEILER.includes(mensei) ||
+    !kategori ||
+    !KATEGORILER.includes(kategori) ||
+    !durum ||
+    !DURUMLAR.includes(durum) ||
+    !tip ||
+    !TIPLER.includes(tip)
+  ) {
+    return null;
+  }
+  const opsiyonel = (ad: string): number | undefined => {
+    const ham = params.get(ad);
+    if (ham === null || ham === '') return undefined;
+    const deger = Number(ham);
+    return Number.isFinite(deger) && deger >= 0 ? deger : undefined;
+  };
+  return {
+    urunBedeli: bedel,
+    kargoUcreti: kargo,
+    sigorta,
+    mensei,
+    kategori,
+    durum,
+    gonderiTipi: tip,
+    agirlikKg: opsiyonel('agirlik'),
+    buAyKacinciGonderi: opsiyonel('gonderi'),
+    gumrukteGecenGun: opsiyonel('gun'),
+    eurTry: opsiyonel('kur'),
+  };
+}
+
 function Sonuc() {
   useSeo({
     baslik: 'Hesap Sonucu',
@@ -51,13 +123,29 @@ function Sonuc() {
   });
 
   const location = useLocation();
+  const [params] = useSearchParams();
   const state = location.state as SonucState | null;
 
-  if (!state) {
+  // Önce navigasyon state'i; yoksa URL parametrelerinden yeniden hesapla
+  // (yenileme/paylaşılan link). Yeniden hesap kayıt YAZMAZ — kayıt yalnızca
+  // formdan gönderimde yapılır.
+  let veri: SonucState | null = state;
+  if (!veri) {
+    const girdi = girdiOku(params);
+    if (girdi) {
+      try {
+        veri = { girdi, sonuc: kararVer(girdi) };
+      } catch {
+        veri = null;
+      }
+    }
+  }
+
+  if (!veri) {
     return <Navigate to="/hesapla" replace />;
   }
 
-  const { girdi, sonuc } = state;
+  const { girdi, sonuc } = veri;
   const gorunum = ONERI_GORUNUM[sonuc.oneri];
   const d = sonuc.dokum;
   const maktu = d.rejim === 'MAKTU';
@@ -183,6 +271,14 @@ function Sonuc() {
                       ≈ {tl(d.cifEur)} € (1 € = {tl(d.kur)} TL)
                     </td>
                   </tr>
+                  {d.emsalNavlun > 0 && (
+                    <tr>
+                      <td className="alt-bilgi" colSpan={2}>
+                        Kargo ücreti girilmediği için kıymete 3 € emsal navlun
+                        ({tl(d.emsalNavlun)} TL) eklendi.
+                      </td>
+                    </tr>
+                  )}
                   {maktu ? (
                     <>
                       <tr>
@@ -255,6 +351,8 @@ function Sonuc() {
             </div>
             <p className="ipucu">
               Ek maliyet / ürün bedeli oranı: %{Math.round(d.maliyetOrani * 100)}
+              {!maktu &&
+                ` (müşavirlik ücreti dahil: %${Math.round(d.kararOrani * 100)})`}
               {' — '}ürün bedeli: {tl(girdi.urunBedeli)} TL. Tutarlar tahmindir;
               kesin vergi gümrük idaresinin kıymet tespitine göre belirlenir.
             </p>

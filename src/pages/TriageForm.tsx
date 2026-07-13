@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { createSearchParams, useNavigate } from 'react-router-dom';
 import { kararVer } from '../lib/decisionEngine';
 import { kaydetBasvuru } from '../lib/basvuru';
-import { getEurTry } from '../lib/kur';
+import { getKurlar } from '../lib/kur';
 import type { KurBilgisi } from '../lib/kur';
+import { BIREYSEL_YASAKLI, VARSAYILAN_EUR_TRY, VARSAYILAN_USD_TRY } from '../lib/rates';
 import { useSeo } from '../lib/seo';
 import type {
   Durum,
@@ -13,6 +14,14 @@ import type {
   Mensei,
   PaketGirdisi,
 } from '../lib/types';
+
+type ParaBirimi = 'TRY' | 'EUR' | 'USD';
+
+const PARA_SEMBOL: Record<ParaBirimi, string> = {
+  TRY: 'TL',
+  EUR: '€',
+  USD: '$',
+};
 
 function TriageForm() {
   useSeo({
@@ -24,6 +33,7 @@ function TriageForm() {
 
   const navigate = useNavigate();
   const [gonderiTipi, setGonderiTipi] = useState<GonderiTipi>('bireysel');
+  const [paraBirimi, setParaBirimi] = useState<ParaBirimi>('TRY');
   const [urunBedeli, setUrunBedeli] = useState('');
   const [kargoUcreti, setKargoUcreti] = useState('');
   const [sigorta, setSigorta] = useState('');
@@ -31,13 +41,14 @@ function TriageForm() {
   const [kategori, setKategori] = useState<Kategori>('genel');
   const [durum, setDurum] = useState<Durum>('gumrukte_bekliyor');
   const [agirlik, setAgirlik] = useState('');
+  const [gonderiSayisi, setGonderiSayisi] = useState('');
   const [gecenGun, setGecenGun] = useState('');
   const [hata, setHata] = useState('');
   const [kur, setKur] = useState<KurBilgisi | null>(null);
 
   useEffect(() => {
     let aktif = true;
-    getEurTry().then((k) => {
+    getKurlar().then((k) => {
       if (aktif) setKur(k);
     });
     return () => {
@@ -45,24 +56,62 @@ function TriageForm() {
     };
   }, []);
 
+  const eurTry = kur?.eurTry ?? VARSAYILAN_EUR_TRY;
+  const usdTry = kur?.usdTry ?? VARSAYILAN_USD_TRY;
+
+  /** Seçili para birimindeki tutarı TL'ye çevirir */
+  function tlCevir(deger: number): number {
+    if (paraBirimi === 'EUR') return deger * eurTry;
+    if (paraBirimi === 'USD') return deger * usdTry;
+    return deger;
+  }
+
+  const yasakUyarisi =
+    gonderiTipi === 'bireysel' ? BIREYSEL_YASAKLI.get(kategori) : undefined;
+
   function gonder(e: FormEvent) {
     e.preventDefault();
     const girdi: PaketGirdisi = {
-      urunBedeli: Number(urunBedeli),
-      kargoUcreti: Number(kargoUcreti || 0),
-      sigorta: Number(sigorta || 0),
+      urunBedeli: tlCevir(Number(urunBedeli)),
+      kargoUcreti: tlCevir(Number(kargoUcreti || 0)),
+      sigorta: tlCevir(Number(sigorta || 0)),
       mensei,
       kategori,
       durum,
       gonderiTipi,
       agirlikKg: agirlik ? Number(agirlik) : undefined,
+      buAyKacinciGonderi: gonderiSayisi ? Number(gonderiSayisi) : undefined,
       gumrukteGecenGun: gecenGun ? Number(gecenGun) : undefined,
-      eurTry: kur?.kur,
+      eurTry: kur?.eurTry,
     };
     try {
       const sonuc = kararVer(girdi);
       void kaydetBasvuru(girdi, sonuc); // talep ölçümü — akışı bloklamaz
-      navigate('/sonuc', { state: { girdi, sonuc } });
+      // Girdi URL'ye de yazılır: sonuç sayfası yenilense/paylaşılsa da
+      // aynı hesap yeniden kurulabilir.
+      const params = createSearchParams({
+        bedel: String(girdi.urunBedeli),
+        kargo: String(girdi.kargoUcreti),
+        sigorta: String(girdi.sigorta ?? 0),
+        mensei: girdi.mensei,
+        kategori: girdi.kategori,
+        durum: girdi.durum,
+        tip: girdi.gonderiTipi,
+        ...(girdi.agirlikKg !== undefined
+          ? { agirlik: String(girdi.agirlikKg) }
+          : {}),
+        ...(girdi.buAyKacinciGonderi !== undefined
+          ? { gonderi: String(girdi.buAyKacinciGonderi) }
+          : {}),
+        ...(girdi.gumrukteGecenGun !== undefined
+          ? { gun: String(girdi.gumrukteGecenGun) }
+          : {}),
+        ...(girdi.eurTry !== undefined ? { kur: String(girdi.eurTry) } : {}),
+      });
+      navigate(
+        { pathname: '/sonuc', search: `?${params.toString()}` },
+        { state: { girdi, sonuc } },
+      );
     } catch (err) {
       setHata(err instanceof Error ? err.message : 'Hesaplama başarısız oldu');
     }
@@ -108,7 +157,26 @@ function TriageForm() {
 
         <div className="form-izgara">
           <div className="form-satir">
-            <label htmlFor="urunBedeli">Ürün bedeli (TL) *</label>
+            <label htmlFor="paraBirimi">Para birimi</label>
+            <select
+              id="paraBirimi"
+              value={paraBirimi}
+              onChange={(e) => setParaBirimi(e.target.value as ParaBirimi)}
+            >
+              <option value="TRY">₺ Türk lirası</option>
+              <option value="EUR">€ Euro</option>
+              <option value="USD">$ ABD doları</option>
+            </select>
+            <p className="ipucu">
+              Tutarları hangi para biriminde biliyorsan onu seç; TL'ye biz
+              çevirelim.
+            </p>
+          </div>
+
+          <div className="form-satir">
+            <label htmlFor="urunBedeli">
+              Ürün bedeli ({PARA_SEMBOL[paraBirimi]}) *
+            </label>
             <input
               id="urunBedeli"
               type="number"
@@ -117,17 +185,21 @@ function TriageForm() {
               required
               value={urunBedeli}
               onChange={(e) => setUrunBedeli(e.target.value)}
-              placeholder="örn. 4500"
+              placeholder={paraBirimi === 'TRY' ? 'örn. 4500' : 'örn. 100'}
             />
             <p className="ipucu">
-              {kur
-                ? `Güncel kur: 1 € ≈ ${kur.kur.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} TL${kur.kaynak === 'varsayilan' ? ' (referans)' : ' (ECB)'}`
-                : 'Döviz cinsinden biliyorsan TL karşılığını gir.'}
+              {paraBirimi !== 'TRY' && Number(urunBedeli) > 0
+                ? `≈ ${tlCevir(Number(urunBedeli)).toLocaleString('tr-TR', { maximumFractionDigits: 2 })} TL`
+                : kur
+                  ? `Güncel kur: 1 € ≈ ${eurTry.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} TL${kur.kaynak === 'varsayilan' ? ' (referans)' : ' (ECB)'}`
+                  : 'Kur bilgisi yükleniyor…'}
             </p>
           </div>
 
           <div className="form-satir">
-            <label htmlFor="kargoUcreti">Kargo ücreti (TL)</label>
+            <label htmlFor="kargoUcreti">
+              Kargo ücreti ({PARA_SEMBOL[paraBirimi]})
+            </label>
             <input
               id="kargoUcreti"
               type="number"
@@ -137,10 +209,15 @@ function TriageForm() {
               onChange={(e) => setKargoUcreti(e.target.value)}
               placeholder="0"
             />
+            <p className="ipucu">
+              Boş bırakırsan mevzuat gereği 3 € emsal navlun eklenir.
+            </p>
           </div>
 
           <div className="form-satir">
-            <label htmlFor="sigorta">Sigorta bedeli (TL)</label>
+            <label htmlFor="sigorta">
+              Sigorta bedeli ({PARA_SEMBOL[paraBirimi]})
+            </label>
             <input
               id="sigorta"
               type="number"
@@ -165,6 +242,26 @@ function TriageForm() {
             />
             <p className="ipucu">30 kg üzeri gönderiler farklı rejime tabi.</p>
           </div>
+
+          {gonderiTipi === 'bireysel' && (
+            <div className="form-satir">
+              <label htmlFor="gonderiSayisi">
+                Bu ay yurt dışından kaçıncı gönderin?
+              </label>
+              <input
+                id="gonderiSayisi"
+                type="number"
+                min="1"
+                step="1"
+                value={gonderiSayisi}
+                onChange={(e) => setGonderiSayisi(e.target.value)}
+                placeholder="biliyorsan"
+              />
+              <p className="ipucu">
+                Takvim ayında 5 gönderiden fazlası maktu vergiden yararlanamaz.
+              </p>
+            </div>
+          )}
 
           <div className="form-satir">
             <label htmlFor="mensei">Nereden geliyor?</label>
@@ -223,6 +320,14 @@ function TriageForm() {
             </div>
           )}
         </div>
+
+        {yasakUyarisi && (
+          <div className="uyari" role="alert">
+            <p style={{ margin: 0 }}>
+              <strong>Dikkat:</strong> {yasakUyarisi}
+            </p>
+          </div>
+        )}
 
         {hata && <p className="form-hata">{hata}</p>}
 
